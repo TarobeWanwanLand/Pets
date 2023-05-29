@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Pets.Core.Random;
-using Random = UnityEngine.Random;
 
 namespace Pets.Core.Linq
 {

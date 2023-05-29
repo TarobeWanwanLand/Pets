@@ -15,7 +15,7 @@ namespace Pets.Core.Math
         /// <param name="other">比較する値</param>
         /// <param name="tolerance">許容誤差</param>
         /// <returns>値が近しいかどうか</returns>
-        public static bool IsNearlyEqual(this float value, float other, float tolerance = Epsilon * 8f) =>
+        public static bool IsNearlyEqual(float value, float other, float tolerance = Epsilon * 8f) =>
             MathF.Abs(value - other) < Max(0.000001f * Max(Abs(value), Abs(other)), tolerance);
 
         /// <summary>
@@ -26,6 +26,34 @@ namespace Pets.Core.Math
         /// <returns>値がゼロに近いかどうか</returns>
         public static bool IsNearlyZero(this float value, float tolerance = Epsilon * 8f) =>
             IsNearlyEqual(value, 0f, tolerance);
+        
+        /// <summary>
+        /// 指定された値が指定された範囲内にあるかどうかを判定します
+        /// </summary>
+        /// <param name="value">判定する値</param>
+        /// <param name="min">最小値</param>
+        /// <param name="max">最大値</param>
+        /// <returns>値が指定された範囲内にあるかどうか</returns>
+        [MethodImpl(Inline)]
+        public static bool IsWithin(this float value, float min, float max) => min <= value && value <= max;
+        
+        /// <summary>
+        /// 指定された値が指定された範囲内にあるかどうかを判定します
+        /// </summary>
+        /// <param name="value">判定する値</param>
+        /// <param name="length">範囲の長さ</param>
+        /// <returns>値が指定された範囲内にあるかどうか</returns>
+        [MethodImpl(Inline)]
+        public static bool IsWithin(this float value, float length) => IsWithin(value, 0f, length);
+        
+        /// <summary>
+        /// 指定された値が指定された範囲内にあるかどうかを判定します
+        /// </summary>
+        /// <param name="value">判定する値</param>
+        /// <param name="length">範囲の長さ</param>
+        /// <returns>値が指定された範囲内にあるかどうか</returns>
+        [MethodImpl(Inline)]
+        public static bool IsWithinAbs(this float value, float length) => IsWithin(value, -length, length);
 
         /// <summary>
         /// 指定された値が数値であるかどうかを判定します
@@ -58,34 +86,6 @@ namespace Pets.Core.Math
         /// <returns>値が非数値であるかどうか</returns>
         [MethodImpl(Inline)]
         public static bool IsNaN(this float value) => float.IsNaN(value);
-        
-        /// <summary>
-        /// 指定された値が指定された範囲内にあるかどうかを判定します
-        /// </summary>
-        /// <param name="value">判定する値</param>
-        /// <param name="min">最小値</param>
-        /// <param name="max">最大値</param>
-        /// <returns>値が指定された範囲内にあるかどうか</returns>
-        [MethodImpl(Inline)]
-        public static bool IsWithin(this float value, float min, float max) => min <= value && value <= max;
-        
-        /// <summary>
-        /// 指定された値が指定された範囲内にあるかどうかを判定します
-        /// </summary>
-        /// <param name="value">判定する値</param>
-        /// <param name="length">範囲の長さ</param>
-        /// <returns>値が指定された範囲内にあるかどうか</returns>
-        [MethodImpl(Inline)]
-        public static bool IsWithin(this float value, float length) => IsWithin(value, 0f, length);
-        
-        /// <summary>
-        /// 指定された値が指定された範囲内にあるかどうかを判定します
-        /// </summary>
-        /// <param name="value">判定する値</param>
-        /// <param name="length">範囲の長さ</param>
-        /// <returns>値が指定された範囲内にあるかどうか</returns>
-        [MethodImpl(Inline)]
-        public static bool IsWithinAbs(this float value, float length) => IsWithin(value, -length, length);
 
         #endregion Comparison
         #region Root

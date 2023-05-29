@@ -1,11 +1,12 @@
 ﻿using MessagePack.Resolvers;
+using Pets.Entities.Generated.Resolvers;
 using UnityEngine;
 
-namespace Pets.Core.Runtime.Core.Bootstraps
+namespace Pets.Core.Bootstraps
 {
     internal static class Bootstrapper
     {
-        static bool _serializerRegistered;
+        static bool _messagePackInitialized;
 
 #if UNITY_EDITOR
         [UnityEditor.InitializeOnLoadMethod]
@@ -18,12 +19,12 @@ namespace Pets.Core.Runtime.Core.Bootstraps
 
         private static void InitializeMessagePack()
         {
-            if (_serializerRegistered) 
+            if (_messagePackInitialized) 
                 return;
             
             // シリアライザの初期設定
             StaticCompositeResolver.Instance.Register(
-                GeneratedResolver.Instance,
+                EntityResolver.Instance,
                 StandardResolver.Instance,
                 MessagePack.Unity.UnityResolver.Instance,
                 MessagePack.Unity.Extension.UnityBlitWithPrimitiveArrayResolver.Instance
@@ -36,7 +37,7 @@ namespace Pets.Core.Runtime.Core.Bootstraps
             // 設定を適応
             MessagePack.MessagePackSerializer.DefaultOptions = option;
             
-            _serializerRegistered = true;
+            _messagePackInitialized = true;
         }
     }
 }

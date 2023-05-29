@@ -1,231 +1,171 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using UniRx;
+using UniRx.Diagnostics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace Pets.Core.InputEvents
 {
-    public sealed class Pointer
+    public readonly struct PointerPressEvent
     {
-        private readonly struct MultiTapObservableKey : IEquatable<MultiTapObservableKey>
+        public Vector2 Position { get; }
+        public TimeSpan Duration { get; }
+        
+        internal PointerPressEvent(Vector2 position, TimeSpan duration)
         {
-            private readonly int _count;
-            private readonly float _intervalSecond;
-
-            public MultiTapObservableKey(int count, float intervalSecond)
-            {
-                _count = count;
-                _intervalSecond = intervalSecond;
-            }
-
-            public bool Equals(MultiTapObservableKey other)
-            {
-                return _count == other._count && _intervalSecond.Equals(other._intervalSecond);
-            }
-
-            public override int GetHashCode()
-            {
-                return HashCode.Combine(_count, _intervalSecond);
-            }
+            Position = position;
+            Duration = duration;
         }
 
+        public override string ToString()
+        {
+            return $"{{{nameof(Position)}: {Position.ToString()}, {nameof(Duration)}: {Duration.ToString()}}}";
+        }
+    }
+
+    public sealed class Pointer
+    {
         private readonly CompositeDisposable _disposables = new();
 
-        private IConnectableObservable<Unit> _onPress;
-        private IConnectableObservable<Unit> _onRelease;
+        private IConnectableObservable<PointerPressEvent> _onPress;
+        private IConnectableObservable<PointerPressEvent> _onRelease;
+        private IConnectableObservable<PointerPressEvent> _onMultiPress;
+        private IConnectableObservable<PointerPressEvent> _onHoldPress;
         private IConnectableObservable<Vector2> _onPositionChange;
         private IConnectableObservable<Vector2> _onMove;
-
-        private Dictionary<MultiTapObservableKey, IConnectableObservable<Unit>> _onMultiPressCaches;
-        private Dictionary<float, IConnectableObservable<Unit>> _onHoldPressCaches;
-
-        private InputAction _pressAction;
-        private InputAction _positionAction;
-        private InputAction _moveAction;
 
         ~Pointer()
         {
             _disposables.Dispose();
         }
 
-        private InputAction GetPressAction()
+        public IObservable<PointerPressEvent> OnPressAsObservable()
         {
-            if (_pressAction == null)
+            if (_onPress == null)
             {
-                _pressAction = new InputAction("Press", binding: "<Pointer>/press")
+                _onPress = GetPressEventObservable()
+                    .Where(ctx => ctx.ReadValueAsButton())
+                    .WithLatestFrom(OnPositionChangeAsObservable(),
+                        (_, pos) => new PointerPressEvent(pos, TimeSpan.Zero))
+                    .Publish();
+                _onPress.Connect()
                     .AddTo(_disposables);
-                _pressAction.Enable();
             }
-
-            return _pressAction;
-        }
-
-        private InputAction GetPositionAction()
-        {
-            if (_positionAction == null)
-            {
-                _positionAction = new InputAction("Position", binding: "<Pointer>/position")
-                    .AddTo(_disposables);
-                _positionAction.Enable();
-            }
-
-            return _positionAction;
-        }
-
-        private InputAction GetMoveAction()
-        {
-            if (_moveAction == null)
-            {
-                _moveAction = new InputAction("Delta", binding: "<Pointer>/delta")
-                    .AddTo(_disposables);
-                _moveAction.Enable();
-            }
-
-            return _moveAction;
-        }
-
-        private IObservable<Unit> GetPressEventObservable()
-        {
-            var action = GetPressAction();
-
-            return Observable.FromEvent<InputAction.CallbackContext>(
-                    h => action.started += h,
-                    h => action.started -= h)
-                .Select(ctx => ctx.started)
-                .AsUnitObservable();
-        }
-
-        private IObservable<Unit> GetReleaseEventObservable()
-        {
-            var action = GetPressAction();
-
-            return Observable.FromEvent<InputAction.CallbackContext>(
-                    h => action.canceled += h,
-                    h => action.canceled -= h)
-                .Select(ctx => ctx.canceled)
-                .AsUnitObservable();
-        }
-
-        private IObservable<Vector2> GetPositionEventObservable()
-        {
-            var action = GetPositionAction();
-
-            return Observable.FromEvent<InputAction.CallbackContext>(
-                    h => action.performed += h,
-                    h => action.performed -= h)
-                .Select(ctx => ctx.ReadValue<Vector2>());
-        }
-
-        private IObservable<Vector2> GetMoveEventObservable()
-        {
-            var action = GetMoveAction();
-
-            return Observable.FromEvent<InputAction.CallbackContext>(
-                    h => action.performed += h,
-                    h => action.performed -= h)
-                .Select(ctx => ctx.ReadValue<Vector2>());
-        }
-
-        public IObservable<Unit> OnPressAsObservable()
-        {
-            if (_onPress != null)
-                return _onPress;
-
-            _onPress = GetPressEventObservable()
-                .Publish();
-            _onPress.Connect()
-                .AddTo(_disposables);
-
             return _onPress;
         }
 
-        public IObservable<Unit> OnMultiPressAsObservable(int count = 2, float intervalSecond = 0.3f)
+        public IObservable<PointerPressEvent> OnReleaseAsObservable()
         {
-            if (count < 2)
-                throw new ArgumentOutOfRangeException(nameof(count));
-
-            var key = new MultiTapObservableKey(count, intervalSecond);
-            _onMultiPressCaches ??= new Dictionary<MultiTapObservableKey, IConnectableObservable<Unit>>();
-            if (_onMultiPressCaches.TryGetValue(key, out var observable))
-                return observable;
-
-            observable = OnPressAsObservable()
-                .TimeInterval()
-                .Select(ti => ti.Interval <= TimeSpan.FromSeconds(intervalSecond))
-                .Buffer(count, 1)
-                .Where(results => !results[0] && results.Skip(1).All(ti => ti))
-                .AsUnitObservable()
-                .Publish();
-            observable.Connect()
-                .AddTo(_disposables);
-
-            _onMultiPressCaches.Add(key, observable);
-
-            return observable;
-        }
-
-        public IObservable<Unit> OnHoldPressAsObservable(float holdTimeSecond = 0.5f)
-        {
-            if (holdTimeSecond < 0f)
-                throw new ArgumentOutOfRangeException(nameof(holdTimeSecond));
-
-            _onHoldPressCaches ??= new Dictionary<float, IConnectableObservable<Unit>>();
-            if (_onHoldPressCaches.TryGetValue(holdTimeSecond, out var observable))
-                return observable;
-
-            observable = OnPressAsObservable()
-                .SelectMany(_ => Observable.Timer(TimeSpan.FromSeconds(holdTimeSecond)))
-                .TakeUntil(OnReleaseAsObservable())
-                .Repeat()
-                .AsUnitObservable()
-                .Publish();
-            observable.Connect()
-                .AddTo(_disposables);
-
-            _onHoldPressCaches.Add(holdTimeSecond, observable);
-
-            return observable;
-        }
-
-        public IObservable<Unit> OnReleaseAsObservable()
-        {
-            if (_onRelease != null)
-                return _onRelease;
-
-            _onRelease = GetReleaseEventObservable()
-                .Publish();
-            _onRelease.Connect()
-                .AddTo(_disposables);
-
+            if (_onRelease == null)
+            {
+                _onRelease = GetPressEventObservable()
+                    .Where(ctx => !ctx.ReadValueAsButton())
+                    .WithLatestFrom(OnPositionChangeAsObservable(),
+                        (ctx, pos) => new PointerPressEvent(pos, TimeSpan.FromSeconds(ctx.duration)))
+                    .Publish();
+                _onRelease.Connect()
+                    .AddTo(_disposables);
+            }
             return _onRelease;
+        }
+        
+        public IObservable<PointerPressEvent> OnDoublePressAsObservable()
+        {
+            if (_onMultiPress == null)
+            {
+                var delayTime = TimeSpan.FromSeconds(InputSystem.settings.multiTapDelayTime);
+                
+                _onMultiPress = GetPressEventObservable()
+                    .Where(ctx => ctx.ReadValueAsButton())
+                    .TimeInterval()
+                    .Pairwise()
+                    .Where(intervals => intervals.Previous.Interval > delayTime && intervals.Current.Interval <= delayTime)
+                    .WithLatestFrom(OnPositionChangeAsObservable(),
+                        (intervals, pos) => new PointerPressEvent(pos, intervals.Current.Interval))
+                    .Publish();
+                _onMultiPress.Connect()
+                    .AddTo(_disposables);
+            }
+            return _onMultiPress;
+        }
+
+        public IObservable<PointerPressEvent> OnHoldPressAsObservable()
+        {
+            if (_onHoldPress == null)
+            {
+                var holdTime = TimeSpan.FromSeconds(InputSystem.settings.defaultHoldTime);
+                
+                _onHoldPress = GetPressEventObservable()
+                    .Where(ctx => ctx.ReadValueAsButton())
+                    .SelectMany(_ => Observable.ReturnUnit()
+                        .Delay(holdTime)
+                        .TakeUntil(GetPressEventObservable()))
+                    .WithLatestFrom(OnPositionChangeAsObservable(),
+                        (_, pos) => new PointerPressEvent(pos, holdTime))
+                    .Publish();
+                _onHoldPress.Connect()
+                    .AddTo(_disposables);
+            }
+            return _onHoldPress;
         }
 
         public IObservable<Vector2> OnPositionChangeAsObservable()
         {
-            if (_onPositionChange != null)
-                return _onPositionChange;
-
-            _onPositionChange = GetPositionEventObservable()
-                .Publish();
-            _onPositionChange.Connect()
-                .AddTo(_disposables);
-
+            if (_onPositionChange == null)
+            {
+                _onPositionChange = GetPositionEventObservable()
+                    .Select(ctx => ctx.ReadValue<Vector2>())
+                    .Publish();
+                _onPositionChange.Connect()
+                    .AddTo(_disposables);
+            }
             return _onPositionChange;
         }
 
         public IObservable<Vector2> OnMoveAsObservable()
         {
-            if (_onMove != null)
-                return _onMove;
-
-            _onMove = GetMoveEventObservable()
-                .Publish();
-            _onMove.Connect()
-                .AddTo(_disposables);
-
+            if (_onMove == null)
+            {
+                _onMove = GetMoveEventObservable()
+                    .Select(ctx => ctx.ReadValue<Vector2>())
+                    .Publish();
+                _onMove.Connect()
+                    .AddTo(_disposables);
+            }
             return _onMove;
+        }
+        
+        private IObservable<InputAction.CallbackContext> GetPressEventObservable()
+        {
+            var action = new InputAction("Press", InputActionType.PassThrough, binding: "<Pointer>/press")
+                .AddTo(_disposables);
+            action.Enable();
+
+            return Observable.FromEvent<InputAction.CallbackContext>(
+                h => action.performed += h,
+                h => action.performed -= h);
+        }
+
+        private IObservable<InputAction.CallbackContext> GetPositionEventObservable()
+        {
+            var action = new InputAction("Position", binding: "<Pointer>/position")
+                .AddTo(_disposables);
+            action.Enable();
+
+            return Observable.FromEvent<InputAction.CallbackContext>(
+                h => action.performed += h,
+                h => action.performed -= h);
+        }
+
+        private IObservable<InputAction.CallbackContext> GetMoveEventObservable()
+        {
+            var action = new InputAction("Delta", binding: "<Pointer>/delta")
+                .AddTo(_disposables);
+            action.Enable();
+
+            return Observable.FromEvent<InputAction.CallbackContext>(
+                h => action.performed += h,
+                h => action.performed -= h);
         }
     }
 }

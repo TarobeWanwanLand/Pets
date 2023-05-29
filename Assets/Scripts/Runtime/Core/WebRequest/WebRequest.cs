@@ -1,11 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
-using System.Net;
 using System.Threading;
 using System;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace Pets.Core
+namespace Pets.Core.WebRequests
 {
     /// <summary>
     /// ウェブリクエストの送信を行う
