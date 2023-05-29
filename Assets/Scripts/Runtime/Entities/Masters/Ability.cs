@@ -1,7 +1,7 @@
 ﻿using MasterMemory;
 using MessagePack;
 
-namespace Pets.Entities
+namespace Pets.Entities.Masters
 {
     [MemoryTable("m_abilities"), MessagePackObject(true)]
     public class Ability : IValidatable<Ability>

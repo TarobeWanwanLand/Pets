@@ -3,7 +3,8 @@
     "rootNamespace": "Pets.Views",
     "references": [
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
-        "GUID:560b04d1a97f54a4e82edc0cbbb69285"
+        "GUID:560b04d1a97f54a4e82edc0cbbb69285",
+        "GUID:8c3d23aec40752b48a3e502ed9b8a386"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
