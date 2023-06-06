@@ -1,4 +1,5 @@
 using System;
+using Pets.Views;
 using UniRx;
 using UniRx.Diagnostics;
 using UnityEngine;
@@ -23,21 +24,14 @@ namespace Pets.Core.InputEvents
         }
     }
 
-    public sealed class Pointer
+    public sealed class PointerInputEventProvider : DisposableModel, IPointerInputEventProvider
     {
-        private readonly CompositeDisposable _disposables = new();
-
         private IConnectableObservable<PointerPressEvent> _onPress;
         private IConnectableObservable<PointerPressEvent> _onRelease;
         private IConnectableObservable<PointerPressEvent> _onMultiPress;
         private IConnectableObservable<PointerPressEvent> _onHoldPress;
         private IConnectableObservable<Vector2> _onPositionChange;
         private IConnectableObservable<Vector2> _onMove;
-
-        ~Pointer()
-        {
-            _disposables.Dispose();
-        }
 
         public IObservable<PointerPressEvent> OnPressAsObservable()
         {
@@ -49,7 +43,7 @@ namespace Pets.Core.InputEvents
                         (_, pos) => new PointerPressEvent(pos, TimeSpan.Zero))
                     .Publish();
                 _onPress.Connect()
-                    .AddTo(_disposables);
+                    .AddTo(this);
             }
             return _onPress;
         }
@@ -64,7 +58,7 @@ namespace Pets.Core.InputEvents
                         (ctx, pos) => new PointerPressEvent(pos, TimeSpan.FromSeconds(ctx.duration)))
                     .Publish();
                 _onRelease.Connect()
-                    .AddTo(_disposables);
+                    .AddTo(this);
             }
             return _onRelease;
         }
@@ -84,7 +78,7 @@ namespace Pets.Core.InputEvents
                         (intervals, pos) => new PointerPressEvent(pos, intervals.Current.Interval))
                     .Publish();
                 _onMultiPress.Connect()
-                    .AddTo(_disposables);
+                    .AddTo(this);
             }
             return _onMultiPress;
         }
@@ -104,7 +98,7 @@ namespace Pets.Core.InputEvents
                         (_, pos) => new PointerPressEvent(pos, holdTime))
                     .Publish();
                 _onHoldPress.Connect()
-                    .AddTo(_disposables);
+                    .AddTo(this);
             }
             return _onHoldPress;
         }
@@ -117,7 +111,7 @@ namespace Pets.Core.InputEvents
                     .Select(ctx => ctx.ReadValue<Vector2>())
                     .Publish();
                 _onPositionChange.Connect()
-                    .AddTo(_disposables);
+                    .AddTo(this);
             }
             return _onPositionChange;
         }
@@ -130,7 +124,7 @@ namespace Pets.Core.InputEvents
                     .Select(ctx => ctx.ReadValue<Vector2>())
                     .Publish();
                 _onMove.Connect()
-                    .AddTo(_disposables);
+                    .AddTo(this);
             }
             return _onMove;
         }
@@ -138,7 +132,7 @@ namespace Pets.Core.InputEvents
         private IObservable<InputAction.CallbackContext> GetPressEventObservable()
         {
             var action = new InputAction("Press", InputActionType.PassThrough, binding: "<Pointer>/press")
-                .AddTo(_disposables);
+                .AddTo(this);
             action.Enable();
 
             return Observable.FromEvent<InputAction.CallbackContext>(
@@ -149,7 +143,7 @@ namespace Pets.Core.InputEvents
         private IObservable<InputAction.CallbackContext> GetPositionEventObservable()
         {
             var action = new InputAction("Position", binding: "<Pointer>/position")
-                .AddTo(_disposables);
+                .AddTo(this);
             action.Enable();
 
             return Observable.FromEvent<InputAction.CallbackContext>(
@@ -160,7 +154,7 @@ namespace Pets.Core.InputEvents
         private IObservable<InputAction.CallbackContext> GetMoveEventObservable()
         {
             var action = new InputAction("Delta", binding: "<Pointer>/delta")
-                .AddTo(_disposables);
+                .AddTo(this);
             action.Enable();
 
             return Observable.FromEvent<InputAction.CallbackContext>(

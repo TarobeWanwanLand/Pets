@@ -646,8 +646,9 @@ PlayerSettings:
   webGLMemoryGeometricGrowthCap: 96
   webGLPowerPreference: 2
   scriptingDefineSymbols:
-    Server: ENABLE_UNSAFE_MSGPACK
-    Standalone: ENABLE_UNSAFE_MSGPACK
+    Server: UNITY_DISABLE_AUTOMATIC_SYSTEM_BOOTSTRAP;UNITASK_DOTWEEN_SUPPORT;ENABLE_UNSAFE_MSGPACK;MOREMOUNTAINS_NICEVIBRATIONS_INSTALLED
+    Standalone: ENABLE_UNSAFE_MSGPACK;MOREMOUNTAINS_NICEVIBRATIONS_INSTALLED
+    WebGL: UNITY_DISABLE_AUTOMATIC_SYSTEM_BOOTSTRAP;UNITASK_DOTWEEN_SUPPORT;ENABLE_UNSAFE_MSGPACK;MOREMOUNTAINS_NICEVIBRATIONS_INSTALLED
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:
@@ -674,7 +675,7 @@ PlayerSettings:
   suppressCommonWarnings: 1
   allowUnsafeCode: 1
   useDeterministicCompilation: 1
-  selectedPlatform: 0
+  selectedPlatform: 1
   additionalIl2CppArgs: 
   scriptingRuntimeVersion: 1
   gcIncremental: 1
