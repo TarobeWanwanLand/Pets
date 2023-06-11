@@ -20,7 +20,7 @@ namespace Pets.Views
         public static TDisposable AddTo<TDisposable>(this TDisposable disposable, DisposableModel model)
             where TDisposable : IDisposable
         {
-            model.AddDisposable(disposable);
+            model.AddDisposable((IDisposable)disposable);
             return disposable;
         }
     }

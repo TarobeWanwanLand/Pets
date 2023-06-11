@@ -72,10 +72,10 @@ namespace Pets.Core.InputEvents
                 _onMultiPress = GetPressEventObservable()
                     .Where(ctx => ctx.ReadValueAsButton())
                     .TimeInterval()
-                    .Pairwise()
-                    .Where(intervals => intervals.Previous.Interval > delayTime && intervals.Current.Interval <= delayTime)
+                    .Pairwise((prev, curt) => (Previous: prev.Interval, Current: curt.Interval))
+                    .Where(intervals => intervals.Previous > delayTime && intervals.Current <= delayTime)
                     .WithLatestFrom(OnPositionChangeAsObservable(),
-                        (intervals, pos) => new PointerPressEvent(pos, intervals.Current.Interval))
+                        (intervals, pos) => new PointerPressEvent(pos, intervals.Current))
                     .Publish();
                 _onMultiPress.Connect()
                     .AddTo(this);
@@ -94,8 +94,7 @@ namespace Pets.Core.InputEvents
                     .SelectMany(_ => Observable.ReturnUnit()
                         .Delay(holdTime)
                         .TakeUntil(GetPressEventObservable()))
-                    .WithLatestFrom(OnPositionChangeAsObservable(),
-                        (_, pos) => new PointerPressEvent(pos, holdTime))
+                    .WithLatestFrom(OnPositionChangeAsObservable(), (_, pos) => new PointerPressEvent(pos, holdTime))
                     .Publish();
                 _onHoldPress.Connect()
                     .AddTo(this);
