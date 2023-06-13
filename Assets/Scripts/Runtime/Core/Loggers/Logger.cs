@@ -1,85 +1,71 @@
-﻿using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using Microsoft.Extensions.Logging;
+﻿using System;
 using UnityEngine;
 
 namespace Pets.Core.Runtime.Core.Loggers
 {
     /// <summary>
-    /// コア機能のロガー
+    /// ロガーの基礎クラス
     /// </summary>
-    public static class Logger
+    public abstract class Logger
     {
-        private const MethodImplOptions Inline = MethodImplOptions.AggressiveInlining;
+        // ロガー本体
+        private readonly ILogger _logger;
         
-        private static readonly Dictionary<LogLevel, DisplayStyle> _displayStyles = new()
-        {
-            {LogLevel.Trace, new DisplayStyle("Trace: ", "#808080")},
-            {LogLevel.Debug, new DisplayStyle("Debug: ", "#808080")},
-            {LogLevel.Information, new DisplayStyle("Info: ", "#000000")},
-            {LogLevel.Warning, new DisplayStyle("Warning: ", "#FFA500")},
-            {LogLevel.Error, new DisplayStyle("Error: ", "#FF0000")},
-            {LogLevel.Critical, new DisplayStyle("Critical: ", "#FF0000")},
-            {LogLevel.None, new DisplayStyle("None: ", "#000000")}
-        };
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="logHandler">ログハンドラ</param>
+        protected Logger(ILogHandler logHandler)
+        { 
+            _logger = new UnityEngine.Logger(logHandler);
+        }
 
-        [MethodImpl(Inline)]
-        private static void LogImpl(LogLevel logLevel, string message)
-        {
-#if DEBUG
-            var displayStyle = _displayStyles[logLevel];
-            var colorCode = displayStyle.ColorCode;
-            var prefix = displayStyle.Prefix;
-            Debug.Log($"<color={colorCode}>{prefix}{message}</color>");
+        /// <summary>
+        /// ログを出力する
+        /// </summary>
+        /// <param name="message">メッセージ</param>
+#if !(UNITY_EDITOR || DEVELOPMENT_BUILD)
+        [Conditional("NEVER_DEFINED_SYMBOL_7259D988_3229_4E5B_8580_2600241935B1")]
 #endif
+        public void Log(string message)
+        {
+            _logger.LogFormat(LogType.Log, message);
         }
         
-        [MethodImpl(Inline)]
-        public static void LogTrace(string message)
+        /// <summary>
+        /// 警告ログを出力する
+        /// </summary>
+        /// <param name="message">警告メッセージ</param>
+#if !(UNITY_EDITOR || DEVELOPMENT_BUILD)
+        [Conditional("NEVER_DEFINED_SYMBOL_7259D988_3229_4E5B_8580_2600241935B1")]
+#endif
+        public void LogWarning(string message)
         {
-            LogImpl(LogLevel.Trace, message);
+            _logger.LogFormat(LogType.Warning, message);
         }
         
-        [MethodImpl(Inline)]
-        public static void LogDebug(string message)
+        /// <summary>
+        /// エラーログを出力する
+        /// </summary>
+        /// <param name="message">エラーメッセージ</param>
+#if !(UNITY_EDITOR || DEVELOPMENT_BUILD)
+        [Conditional("NEVER_DEFINED_SYMBOL_7259D988_3229_4E5B_8580_2600241935B1")]
+#endif
+        public void LogError(string message)
         {
-            LogImpl(LogLevel.Debug, message);
+            _logger.LogFormat(LogType.Error, message);
         }
         
-        [MethodImpl(Inline)]
-        public static void LogInfo(string message)
+        /// <summary>
+        /// 例外ログを出力する
+        /// </summary>
+        /// <param name="exception">例外</param>
+#if !(UNITY_EDITOR || DEVELOPMENT_BUILD)
+        [Conditional("NEVER_DEFINED_SYMBOL_7259D988_3229_4E5B_8580_2600241935B1")]
+#endif
+        public void LogException(Exception exception)
         {
-            LogImpl(LogLevel.Information, message);
-        }
-        
-        [MethodImpl(Inline)]
-        public static void LogWarn(string message)
-        {
-            LogImpl(LogLevel.Warning, message);
-        }
-        
-        [MethodImpl(Inline)]
-        public static void LogError(string message)
-        {
-            LogImpl(LogLevel.Error, message);
-        }
-        
-        [MethodImpl(Inline)]
-        public static void LogCritical(string message)
-        {
-            LogImpl(LogLevel.Critical, message);
-        }
-
-        public struct DisplayStyle
-        {
-            public string Prefix { get; }
-            public string ColorCode { get; }
-
-            public DisplayStyle(string prefix, string colorCode)
-            {
-                Prefix = prefix;
-                ColorCode = colorCode;
-            }
+            _logger.LogException(exception);
         }
     }
 }
