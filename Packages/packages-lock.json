@@ -70,13 +70,6 @@
       "dependencies": {},
       "url": "https://package.openupm.com"
     },
-    "com.github-glitchenzo.nugetforunity": {
-      "version": "3.0.5",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://package.openupm.com"
-    },
     "com.neuecc.messagepack": {
       "version": "2.5.1-alpha",
       "depth": 0,
