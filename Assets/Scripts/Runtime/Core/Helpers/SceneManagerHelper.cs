@@ -13,8 +13,8 @@ namespace Pets.Core.Helpers
         /// <param name="sceneIndex">ロードするシーンのインデックス</param>
         /// <param name="progress">進捗状況の通知を受け取るオブジェクト</param>
         /// <param name="cancellationToken">キャンセル用トークン</param>
-        public static async UniTask LoadSceneAsync(int sceneIndex,
-            IProgress<float> progress = null, CancellationToken cancellationToken = default)
+        public static async UniTask LoadSceneAsync(int sceneIndex, IProgress<float> progress = null,
+            CancellationToken cancellationToken = default)
         {
             await SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Additive)
                 .ToUniTask(progress, cancellationToken: cancellationToken);
