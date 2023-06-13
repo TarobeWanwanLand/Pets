@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Pets.Editor.CodeBuilders
 {
-    public class FileSystem
+    public class AssetsPathHelper
     {
         /// <summary>
         /// 絶対パスからアセットパスに変換する
@@ -21,30 +21,26 @@ namespace Pets.Editor.CodeBuilders
         /// <param name="assetsPath">アセットパス</param>
         public static string ToAbsolutePath(string assetsPath)
         {
-#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
             return assetsPath.Replace("Assets", Application.dataPath);
-#else
-            return assetsPath.Replace("Assets", Application.dataPath);
-#endif
         }
         
-        public static void CreateFolderRecursive(string path)
+        /// <summary>
+        /// フォルダを再帰的に作成する
+        /// </summary>
+        /// <param name="assetsPath">Assetsから始まるパス</param>
+        public static void CreateFolderRecursive(string assetsPath)
         {
             // Assetsから始まってない場合は処理できない
-            if (!path.StartsWith("Assets/"))
-                throw new System.ArgumentException("Assetsから始まるパスを指定してください", nameof(path));
+            if (!assetsPath.StartsWith("Assets/"))
+                throw new System.ArgumentException("Assetsから始まるパスを指定してください", nameof(assetsPath));
  
-            var directories = path.Split('/');
-            var combinePath = directories[0];
+            // 末尾の'/'を削除
+            if (assetsPath.EndsWith("/"))
+                assetsPath = assetsPath.Substring(0, assetsPath.Length - 1);
             
-            // Assets の部分はスキップ
-            foreach (var dir in directories.Skip(1))
-            {
-                // ディレクトリの存在確認
-                if (!AssetDatabase.IsValidFolder(combinePath + '/' + dir))
-                    AssetDatabase.CreateFolder(combinePath, dir);
-                combinePath += '/' + dir;
-            }
+            // フォルダを作成する
+            var absolutePath = ToAbsolutePath(assetsPath);
+            System.IO.Directory.CreateDirectory(absolutePath);
         }
     }
 }
