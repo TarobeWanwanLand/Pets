@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Pets.Core.Runtime.Core.Loggers;
 using Pets.Editor.CodeBuilders;
 using UnityEditor;
-using UnityEngine.SceneManagement;
-using Logger = Pets.Core.Runtime.Core.Loggers.Logger;
 
 namespace Pets.Editor.NamingConstants
 {
@@ -19,33 +18,27 @@ namespace Pets.Editor.NamingConstants
         [MenuItem(MenuItemName)]
         public static void Create()
         {
-            Logger.LogDebug("シーンの定数スクリプトを生成します");
+            //Logger.LogDebug("シーンの定数スクリプトを生成します");
             
             var codeString = GenerateCodeString();
             
-            FileSystem.CreateFolderRecursive(DefaultScriptFolder);
+            AssetsPathHelper.CreateFolderRecursive(DefaultScriptFolder);
             
-            var absolutePath = FileSystem.ToAbsolutePath(DefaultScriptFolder + DefaultScriptName);
+            var absolutePath = AssetsPathHelper.ToAbsolutePath(DefaultScriptFolder + DefaultScriptName);
             File.WriteAllText(absolutePath, codeString, Encoding.UTF8);
             
             AssetDatabase.Refresh();
             
-            Logger.LogDebug("シーンの定数スクリプトの生成が完了しました");
+            //Logger.LogDebug("シーンの定数スクリプトの生成が完了しました");
         }
         
         private static string GenerateCodeString()
         {
             var builder = new CodeBuilder();
-
-            builder.Append("namespace ");
-            builder.Append(DefaultNamespace);
-
-            using (builder.CreateScope())
+            
+            using (builder.CreateNamespaceScope(DefaultNamespace))
             {
-                builder.Append("public enum ");
-                builder.Append(DefaultEnumName);
-
-                using (var enumBuilder = builder.CreateEnumBuilder(AccessModifier.Public, DefaultEnumName))
+                using (var enumBuilder = builder.CreateEnumScope(AccessModifier.Public, DefaultEnumName))
                 {
                     enumBuilder.AppendField("Invalid", -1);
 

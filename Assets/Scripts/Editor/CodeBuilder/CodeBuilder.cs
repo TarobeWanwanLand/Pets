@@ -24,11 +24,6 @@ namespace Pets.Editor.CodeBuilders
                 
             _stringBuilder.Append(code);
         }
-        
-        public void BackSpace(int count = 1)
-        {
-            _stringBuilder.Remove(_stringBuilder.Length - count, count);
-        }
 
         public void NewLine()
         {
@@ -40,13 +35,13 @@ namespace Pets.Editor.CodeBuilders
             }
         }
 
-        public void Indent()
+        internal void Indent()
         {
             _currentIndent++;
             _stringBuilder.Append('\t');
         }
         
-        public void Unindent()
+        internal void Unindent()
         {
             if (_currentIndent == 0) throw new InvalidOperationException("インデントのレベルが0未満になりました");
             _currentIndent--;

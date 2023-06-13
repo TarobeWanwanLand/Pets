@@ -1,25 +1,26 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace Pets.Editor.CodeBuilders
 {
     public static partial class CodeBuilderExtensions
     {
-        public static EnumBuilder CreateEnumBuilder(this CodeBuilder self, AccessModifier accessModifier, string name)
+        public static EnumScope CreateEnumScope(this CodeBuilder self, AccessModifier modifiers, string name)
         {
-            return new(self, accessModifier, name);
+            return new(self, modifiers, name);
         }
 
-        public class EnumBuilder : IDisposable
+        public class EnumScope : IDisposable
         {
             private readonly CodeBuilder _codeBuilder;
             private readonly Scope _scope;
             
-            internal EnumBuilder(CodeBuilder codeBuilder, AccessModifier accessModifier, string name)
+            private bool _isFirstField = true;
+            
+            internal EnumScope(CodeBuilder codeBuilder, AccessModifier accessModifier, string name)
             {
                 _codeBuilder = codeBuilder;
                 
-                _codeBuilder.Append(accessModifier.ToString());
+                _codeBuilder.Append(accessModifier.ToAccessString());
                 _codeBuilder.Append("enum ");
                 _codeBuilder.Append(name);
                 
@@ -28,7 +29,13 @@ namespace Pets.Editor.CodeBuilders
 
             public void AppendField(string name, int value = int.MaxValue)
             {
-                _codeBuilder.NewLine();
+                if (!_isFirstField)
+                {
+                    _codeBuilder.Append(',');
+                    _codeBuilder.NewLine();   
+                }
+                _isFirstField = false;
+                
                 _codeBuilder.Append(name);
                 
                 if(value != int.MaxValue)
@@ -36,14 +43,10 @@ namespace Pets.Editor.CodeBuilders
                     _codeBuilder.Append(" = ");
                     _codeBuilder.Append(value.ToString());
                 }
-                
-                _codeBuilder.Append(',');
             }
 
             public void Dispose()
             {
-                _codeBuilder.BackSpace();
-                
                 _scope.Dispose();
             }
         }
