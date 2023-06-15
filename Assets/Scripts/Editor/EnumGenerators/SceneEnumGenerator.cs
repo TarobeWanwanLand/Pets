@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using Pets.Core.Runtime.Core.Loggers;
 using Pets.Editor.CodeBuilders;
 using UnityEditor;
 

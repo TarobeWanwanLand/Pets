@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Pets.Core.Runtime.Core.Extensions
+namespace Pets.Core.Extensions
 {
     public static class GameObjectExtensions
     {
